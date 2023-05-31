@@ -3,6 +3,11 @@ import csv
 import matplotlib.pyplot as plt
 from learn import read_data, estimate_price
 
+def normalize(x: float, x_min: float, x_max: float, x_avg):
+
+	return (x ) / (x_max )
+
+
 if __name__ == "__main__":
     
 	if len(sys.argv) < 2:
@@ -18,13 +23,19 @@ if __name__ == "__main__":
 	ax.set_xlabel('kilometers')
 	ax.set_ylabel('price')
 
-	theta0 = 0.04344178708402814
-	theta1 = -0.042637780971932715
+	theta0 = 8000
+	theta1 = -5000.434782608634
+	xmin = 22899.0
+	xmax = 240000.0
+	xavg = 101066.25
+
 	x1 = 200000
-	y1 = estimate_price(x1, theta0, theta1)
+	x1_norm = normalize(x1, xmin, xmax, xavg)
+	y1 = estimate_price(x1_norm, theta0, theta1)
 	x2 = 50000
-	y2 = estimate_price(x2, theta0, theta1)
+	x2_norm = normalize(x2, xmin, xmax, xavg)
+	y2 = estimate_price(x2_norm, theta0, theta1)
 	print([x1, y1], [x2, y2])
-	plt.plot([x1, y1], [x2, y2], label='linear_regression')
+	plt.plot([x1, x2], [y1, y2], label='linear_regression')
 
 	plt.show()

@@ -1,10 +1,10 @@
 from pathlib import Path
 import csv
 import sys
-import random
-import datetime
+import matplotlib.pyplot as plt
 
-LEARNING_RATE = 0.01
+
+LEARNING_RATE = 0.1
 MAX_ITERATIONS = 10000
 
 
@@ -24,18 +24,19 @@ def read_data(filepath: str):
 
 def normalize_dataset(dataset: list):
 	mileages = [float(entry['km']) for entry in dataset]
-	prices = [float(entry['price']) for entry in dataset]
+	# prices = [float(entry['price']) for entry in dataset]
 
 	mileage_min = min(mileages)
 	mileage_max = max(mileages)
+	mileage_avg = sum(mileages) / len(mileages)
+	print(f"mileage_min: {mileage_min}, mileage_max: {mileage_max}, mileage_avg: {mileage_avg}")
 
-
-	price_min = min(prices)
-	price_max = max(prices)
+	# price_min = min(prices)
+	# price_max = max(prices)
 
 	for entry in dataset:
-		entry['km'] = (float(entry['km']) - mileage_min) / (mileage_max - mileage_min)
-		entry['price'] = (float(entry['price']) - price_min) / (price_max - price_min)
+		entry['km'] = (float(entry['km'])) / (mileage_max)
+		# entry['price'] = (float(entry['price']) - price_min) / (price_max - price_min)
 
 	print(dataset)
 	return dataset
@@ -76,8 +77,8 @@ if __name__ == "__main__":
 		exit(1)
 	
 	dataset = read_data(sys.argv[1])
-	dataset = normalize_dataset(dataset)
-	m = len(dataset)
+	norm_dataset = normalize_dataset(dataset)
+	m = len(norm_dataset)
 	
 	# random.seed(datetime.datetime.now().timestamp())
 	theta0 = 0
@@ -86,11 +87,15 @@ if __name__ == "__main__":
 
 	min_reached = False
 	iter_count = 0
+	costs = []
+	iters = []
 	while iter_count < MAX_ITERATIONS:
 		iter_count += 1
-		cost = calculate_cost(dataset, theta0, theta1)
+		iters.append(iter_count)
+		cost = calculate_cost(norm_dataset, theta0, theta1)
 		print(f"cost : {cost}")
-		derivate_theta0, derivate_theta1 = derivative_sum(dataset, theta0, theta1)
+		costs.append(cost)
+		derivate_theta0, derivate_theta1 = derivative_sum(norm_dataset, theta0, theta1)
 		print(f"dt0: {derivate_theta0}, dt1: {derivate_theta1}")
 		# print(derivate_theta0, derivate_theta1)
 		tmp_theta0 = (LEARNING_RATE * derivate_theta0)
@@ -102,5 +107,8 @@ if __name__ == "__main__":
 		theta1 = theta1 - tmp_theta1
 		print(f"theta0: {theta0}, theta1: {theta1}")
 
-		
-			
+	fig, ax = plt.subplots()
+	ax.scatter(iters, costs)
+	ax.set_xlabel('iterations')
+	ax.set_ylabel('cost')	
+	plt.show()
