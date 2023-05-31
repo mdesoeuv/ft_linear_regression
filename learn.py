@@ -4,9 +4,8 @@ import sys
 import matplotlib.pyplot as plt
 
 
-LEARNING_RATE = 1.6
-MAX_ITERATIONS = 100
-
+LEARNING_RATE = 0.6
+MAX_ITERATIONS = 10000
 
 
 def read_data(filepath: str):
@@ -22,23 +21,28 @@ def read_data(filepath: str):
 	return dataset
 
 
-def normalize_dataset(dataset: list):
-	mileages = [float(entry['km']) for entry in dataset]
-	# prices = [float(entry['price']) for entry in dataset]
+def write_to_csv(filepath: str, data: list, fields: list):
 
-	mileage_min = min(mileages)
-	mileage_max = max(mileages)
-	mileage_avg = sum(mileages) / len(mileages)
-	print(f"mileage_min: {mileage_min}, mileage_max: {mileage_max}, mileage_avg: {mileage_avg}")
+	if Path(filepath).is_dir():
+		print("File is a directory")
+		exit(1)
 
-	# price_min = min(prices)
-	# price_max = max(prices)
+	with open(filepath, mode='w', newline='') as csvfile:
+		writer = csv.DictWriter(csvfile, fieldnames=fields)
+		writer.writeheader()
+		writer.writerows(data)
+
+
+def normalize(x: float, x_min: float, x_max: float):
+
+	return (x - x_min) / (x_max - x_min)
+
+
+def normalize_dataset(dataset: list, mileage_min: float, mileage_max: float):
 
 	for entry in dataset:
-		entry['km'] = (float(entry['km'])) / (mileage_max)
-		# entry['price'] = (float(entry['price']) - price_min) / (price_max - price_min)
+		entry['km'] = normalize(float(entry['km']), mileage_min, mileage_max)
 
-	print(dataset)
 	return dataset
 
 
@@ -55,6 +59,7 @@ def calculate_cost(dataset: list, theta0: float, theta1: float):
 		diff = estimate_price(mileage, theta0, theta1) - price
 		cost += (diff * diff) / (2 * m)
 	return cost 
+
 
 def derivative_sum(dataset: list, theta0: float, theta1: float):
 	sum_dt0 = 0
@@ -76,39 +81,45 @@ if __name__ == "__main__":
 		exit(1)
 	
 	dataset = read_data(sys.argv[1])
-	norm_dataset = normalize_dataset(dataset)
+	mileages = [float(entry['km']) for entry in dataset]
+	mileage_min = min(mileages)
+	mileage_max = max(mileages)
+	print(f"mileage_min: {mileage_min}, mileage_max: {mileage_max}")
+	norm_dataset = normalize_dataset(dataset, mileage_min=mileage_min, mileage_max=mileage_max)
 	m = len(norm_dataset)
 	
-	# random.seed(datetime.datetime.now().timestamp())
 	theta0 = 0
 	theta1 = 0
-	print(f"starting with theta0: {theta0}, theta1: {theta1}")
 
 	min_reached = False
 	iter_count = 0
+	iters_costs = []
 	costs = []
 	iters = []
-	while not min_reached:
+	while not min_reached and iter_count < MAX_ITERATIONS:
 		iter_count += 1
-		iters.append(iter_count)
 		cost = calculate_cost(norm_dataset, theta0, theta1)
-		# print(f"cost : {cost}")
+		iters_costs.append({"iterations": iter_count, "costs": cost})
+		iters.append(iter_count)
 		costs.append(cost)
 		derivate_theta0, derivate_theta1 = derivative_sum(norm_dataset, theta0, theta1)
-		# print(f"dt0: {derivate_theta0}, dt1: {derivate_theta1}")
-		# print(derivate_theta0, derivate_theta1)
 		tmp_theta0 = (LEARNING_RATE * derivate_theta0)
 		tmp_theta1 = (LEARNING_RATE * derivate_theta1)
 		if round(theta0 - tmp_theta0, 2) == round(theta0, 2) and round(theta1 - tmp_theta1, 2) == round(theta1, 2):
-			print(f"Minimum reached in {iter_count} iterations : theta0={theta0}, theta1={theta1}")
+			print(f"Minimum reached in {iter_count} iterations : theta0={theta0 - tmp_theta0}, theta1={theta1 - tmp_theta1}")
 			min_reached = True
 		theta0 = theta0 - tmp_theta0
 		theta1 = theta1 - tmp_theta1
-		# print(f"theta0: {theta0}, theta1: {theta1}")
 
-	fig, ax = plt.subplots()
-	fig.suptitle("Cost function evolution with iterations")
-	ax.scatter(iters, costs)
-	ax.set_xlabel('iterations')
-	ax.set_ylabel('cost')	
-	plt.show()
+	write_to_csv("costs_iterations.csv", iters_costs, ["iterations", "costs"])
+	write_to_csv(
+		"regression_results.csv",
+		[{
+			"theta0": theta0,
+			"theta1": theta1,
+			"x_min": mileage_min,
+			"x_max": mileage_max
+			}],
+		fields=["theta0", "theta1", "x_min", "x_max"]
+		)
+
