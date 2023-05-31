@@ -19,12 +19,13 @@ if __name__ == "__main__":
 	y = [int(entry['price']) for entry in dataset]
 
 	fig, ax = plt.subplots()
+	fig.suptitle("Linear regression representation")
 	ax.scatter(x, y)
 	ax.set_xlabel('kilometers')
 	ax.set_ylabel('price')
 
-	theta0 = 8000
-	theta1 = -5000.434782608634
+	theta0 = 8499.599649933132
+	theta1 = -5147.751262008374
 	xmin = 22899.0
 	xmax = 240000.0
 	xavg = 101066.25
