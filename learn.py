@@ -1,14 +1,13 @@
 from pathlib import Path
 import csv
 import sys
-import matplotlib.pyplot as plt
 
 
 LEARNING_RATE = 0.6
 MAX_ITERATIONS = 10000
 
 
-def read_data(filepath: str):
+def read_csv(filepath: str):
 	if not Path(filepath).exists() or Path(filepath).is_dir():
 		print("File does not exist or is a directory")
 		exit(1)
@@ -33,7 +32,7 @@ def write_to_csv(filepath: str, data: list, fields: list):
 		writer.writerows(data)
 
 
-def normalize(x: float, x_min: float, x_max: float):
+def normalize(x: float, x_min = 0, x_max = 1):
 
 	return (x - x_min) / (x_max - x_min)
 
@@ -42,7 +41,6 @@ def normalize_dataset(dataset: list, mileage_min: float, mileage_max: float):
 
 	for entry in dataset:
 		entry['km'] = normalize(float(entry['km']), mileage_min, mileage_max)
-
 	return dataset
 
 
@@ -53,9 +51,17 @@ def estimate_price(mileage: float, theta0: float, theta1: float):
 def calculate_cost(dataset: list, theta0: float, theta1: float):
 	cost = 0
 	m = len(dataset)
+	if not m:
+		print("Invalid dataset.")
+		exit(1)
+	
 	for entry in dataset:
-		mileage = float(entry['km'])
-		price = float(entry['price'])
+		try:
+			mileage = float(entry['km'])
+			price = float(entry['price'])
+		except KeyError:
+			print("Invalid dataset.")
+			exit(1)
 		diff = estimate_price(mileage, theta0, theta1) - price
 		cost += (diff * diff) / (2 * m)
 	return cost 
@@ -80,13 +86,17 @@ if __name__ == "__main__":
 		print("usage: learn [csvfile]")
 		exit(1)
 	
-	dataset = read_data(sys.argv[1])
-	mileages = [float(entry['km']) for entry in dataset]
+	dataset = read_csv(sys.argv[1])
+	try:
+		mileages = [float(entry['km']) for entry in dataset]
+	except KeyError:
+		print("Invalid dataset.")
+		exit(1)
+	
 	mileage_min = min(mileages)
 	mileage_max = max(mileages)
-	print(f"mileage_min: {mileage_min}, mileage_max: {mileage_max}")
+
 	norm_dataset = normalize_dataset(dataset, mileage_min=mileage_min, mileage_max=mileage_max)
-	m = len(norm_dataset)
 	
 	theta0 = 0
 	theta1 = 0
@@ -94,14 +104,11 @@ if __name__ == "__main__":
 	min_reached = False
 	iter_count = 0
 	iters_costs = []
-	costs = []
-	iters = []
+
 	while not min_reached and iter_count < MAX_ITERATIONS:
 		iter_count += 1
 		cost = calculate_cost(norm_dataset, theta0, theta1)
 		iters_costs.append({"iterations": iter_count, "costs": cost})
-		iters.append(iter_count)
-		costs.append(cost)
 		derivate_theta0, derivate_theta1 = derivative_sum(norm_dataset, theta0, theta1)
 		tmp_theta0 = (LEARNING_RATE * derivate_theta0)
 		tmp_theta1 = (LEARNING_RATE * derivate_theta1)
