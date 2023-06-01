@@ -9,7 +9,35 @@ LEARNING_RATE = 0.1
 MAX_ITERATIONS = 10000
 
 
-#TODO: object DataSet{fields[str], normalize, size, feature_name}
+class UniVariableLinearRegression:
+
+	@staticmethod	
+	def normalize(x: float, x_min = 0, x_max = 1):
+
+		return (x - x_min) / (x_max - x_min)
+
+
+	@staticmethod
+	def normalize_dataset(dataset: list, feature: str, feature_min: float, feature_max: float):
+
+		cpy_data = copy.deepcopy(dataset)
+		for entry in cpy_data:
+			entry[feature] = UniVariableLinearRegression.normalize(float(entry[feature]), feature_min, feature_max)
+		return cpy_data
+	
+
+	def __init__(self, dataset: list, feature: str, target: str):
+		self.dataset = dataset
+		self.feature = feature
+		self.target = target
+		self.dataset_size = len(dataset)
+		self.x = [float(entry[feature] for entry in self.dataset)]
+		self.y = [float(entry[target] for entry in self.dataset)]
+		self.x_min = min(self.x)
+		self.x_max = max(self.y)
+		self.normalized_dataset = self.normalize_dataset(self.dataset, self.x_min, self.x_max)
+		self.theta0 = 0
+		self.theta1 = 1
 
 
 def read_csv(filepath: str):
@@ -37,17 +65,6 @@ def write_to_csv(filepath: str, data: list, fields: list):
 		writer.writerows(data)
 
 
-def normalize(x: float, x_min = 0, x_max = 1):
-
-	return (x - x_min) / (x_max - x_min)
-
-
-def normalize_dataset(dataset: list, mileage_min: float, mileage_max: float):
-
-	cpy_data = copy.deepcopy(dataset)
-	for entry in cpy_data:
-		entry['km'] = normalize(float(entry['km']), mileage_min, mileage_max)
-	return cpy_data
 
 
 def estimate_price(mileage: float, theta0: float, theta1: float):
@@ -117,7 +134,7 @@ if __name__ == "__main__":
 	mileage_min = min(mileages)
 	mileage_max = max(mileages)
 
-	norm_dataset = normalize_dataset(dataset, mileage_min=mileage_min, mileage_max=mileage_max)
+	norm_dataset = UniVariableLinearRegression.normalize_dataset(dataset, "km", mileage_min, mileage_max)
 	
 	theta0 = 0
 	theta1 = 0

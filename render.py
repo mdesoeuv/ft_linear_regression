@@ -1,6 +1,6 @@
 import sys
 import matplotlib.pyplot as plt
-from learn import read_csv, estimate_price, normalize, normalize_dataset ,r_square
+from learn import read_csv, estimate_price,r_square, UniVariableLinearRegression
 from dataclasses import dataclass
 
 #TODO: Analytics Object
@@ -11,6 +11,15 @@ class RegressionParameters:
 	theta1: float = 0
 	x_min: float = 0
 	x_max: float = 1
+
+
+@dataclass
+class Analytics:
+	rsquare: float
+	rmse: float
+	
+	def __repr__(self):
+		return f"Analytics :\nR2 = {self.rsquare}\nRMSE = {self.rmse}\n\n"
 
 
 def plot_iterations_costs(data: str):
@@ -52,10 +61,10 @@ def plot_linear_regression(dataset: str, params: RegressionParameters):
 
 	# Calculating two points to draw the regression line
 	x1 = 200000
-	x1_norm = normalize(x1, params.x_min, params.x_max)
+	x1_norm = UniVariableLinearRegression.normalize(x1, params.x_min, params.x_max)
 	y1 = estimate_price(x1_norm, params.theta0, params.theta1)
 	x2 = 42000
-	x2_norm = normalize(x2, params.x_min, params.x_max)
+	x2_norm = UniVariableLinearRegression.normalize(x2, params.x_min, params.x_max)
 	y2 = estimate_price(x2_norm, params.theta0, params.theta1)
 	print("Regression Line drawn with points :")
 	print([x1, y1], [x2, y2], end="\n\n")
@@ -83,7 +92,7 @@ if __name__ == "__main__":
 		x_max=float(results_data.get("x_max", 1))
 	)
 
-	norm_dataset = normalize_dataset(dataset, params.x_min, params.x_max)
+	norm_dataset = UniVariableLinearRegression.normalize_dataset(dataset, "km", params.x_min, params.x_max)
 
 	print("Analytics :")
 	rsquare = r_square(norm_dataset, params.theta0, params.theta1)
