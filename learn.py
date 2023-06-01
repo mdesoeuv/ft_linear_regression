@@ -1,9 +1,10 @@
 from pathlib import Path
 import csv
 import sys
+import math
 
 
-LEARNING_RATE = 0.6
+LEARNING_RATE = 0.1
 MAX_ITERATIONS = 10000
 
 
@@ -108,7 +109,7 @@ if __name__ == "__main__":
 	while not min_reached and iter_count < MAX_ITERATIONS:
 		iter_count += 1
 		cost = calculate_cost(norm_dataset, theta0, theta1)
-		iters_costs.append({"iterations": iter_count, "costs": cost})
+		iters_costs.append({"iterations": iter_count, "costs": cost, "rmse": math.sqrt(cost)})
 		derivate_theta0, derivate_theta1 = derivative_sum(norm_dataset, theta0, theta1)
 		tmp_theta0 = (LEARNING_RATE * derivate_theta0)
 		tmp_theta1 = (LEARNING_RATE * derivate_theta1)
@@ -118,7 +119,7 @@ if __name__ == "__main__":
 		theta0 = theta0 - tmp_theta0
 		theta1 = theta1 - tmp_theta1
 
-	write_to_csv("costs_iterations.csv", iters_costs, ["iterations", "costs"])
+	write_to_csv("costs_iterations.csv", iters_costs, ["iterations", "costs", "rmse"])
 	write_to_csv(
 		"regression_results.csv",
 		[{

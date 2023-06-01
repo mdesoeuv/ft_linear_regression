@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 costs_iterations.csv
 regression_results.csv
+linear_regression.png
+iterations_costs.png

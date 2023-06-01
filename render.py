@@ -1,5 +1,4 @@
 import sys
-import csv
 import matplotlib.pyplot as plt
 from learn import read_csv, estimate_price, normalize
 
@@ -19,8 +18,11 @@ def plot_iterations_costs(filepath: str):
 	fig.suptitle("Cost function evolution with iterations")
 	ax.scatter(iters, costs)
 	ax.set_xlabel('iterations')
-	ax.set_ylabel('cost')	
-
+	ax.set_ylabel('cost')
+	try:
+		fig.savefig("iterations_costs.png")	
+	except Exception:
+		print("Png export failed.")
 
 def plot_linear_regression(dataset_path: str, results_path: str):
 	dataset = read_csv(dataset_path)
@@ -54,6 +56,10 @@ def plot_linear_regression(dataset_path: str, results_path: str):
 	y2 = estimate_price(x2_norm, theta0, theta1)
 	print([x1, y1], [x2, y2])
 	plt.plot([x1, x2], [y1, y2], label='linear_regression', color='red')
+	try:
+		fig.savefig("linear_regression.png")	
+	except Exception:
+		print("Png export failed.")
 
 
 
