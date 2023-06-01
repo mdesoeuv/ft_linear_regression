@@ -163,3 +163,6 @@ regression_results.csv
 linear_regression.png
 iterations_costs.png
 regression_parameters.csv
+costs_iterations1.csv
+costs_iterations2.csv
+costs_iterations3.csv

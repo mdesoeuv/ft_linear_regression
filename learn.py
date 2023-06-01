@@ -6,7 +6,9 @@ import math
 from dataclasses import dataclass
 
 
-LEARNING_RATE = 0.1
+LEARNING_RATE_1 = 0.5
+LEARNING_RATE_2 = 0.1
+LEARNING_RATE_3 = 0.01
 MAX_ITERATIONS = 10000
 
 
@@ -68,18 +70,18 @@ class UniVariableLinearRegression(RegressionParameters):
 	
 	def gradient_descent(self):			
 		min_reached = False
-		while not min_reached and regression.iter < MAX_ITERATIONS:
-			regression.iter += 1
-			cost = regression.calculate_cost()
+		while not min_reached and self.iter < MAX_ITERATIONS:
+			self.iter += 1
+			cost = self.calculate_cost()
 			self.iters_costs.append(
-				{"iterations": regression.iter, "costs": cost, "rmse": math.sqrt(cost)}
+				{"iterations": self.iter, "costs": cost, "rmse": math.sqrt(cost)}
 				)
-			tmp_theta0, tmp_theta1 = regression.derivative_sum()
-			if round(regression.theta0 - tmp_theta0, 2) == round(regression.theta0, 2) and round(regression.theta1 - tmp_theta1, 2) == round(regression.theta1, 2):
-				print(f"Minimum reached in {regression.iter} iterations : theta0={regression.theta0 - tmp_theta0}, theta1={regression.theta1 - tmp_theta1}")
+			tmp_theta0, tmp_theta1 = self.derivative_sum()
+			if round(self.theta0 - tmp_theta0, 2) == round(self.theta0, 2) and round(self.theta1 - tmp_theta1, 2) == round(self.theta1, 2):
+				print(f"Minimum reached in {self.iter} iterations : theta0={self.theta0 - tmp_theta0}, theta1={self.theta1 - tmp_theta1}")
 				min_reached = True
-			regression.theta0 = regression.theta0 - tmp_theta0
-			regression.theta1 = regression.theta1 - tmp_theta1
+			self.theta0 = self.theta0 - tmp_theta0
+			self.theta1 = self.theta1 - tmp_theta1
 
 	def __init__(self, dataset: list, feature: str, target: str,
 	      theta0 = 0, theta1 = 0,learning_rate = 0):
@@ -146,26 +148,42 @@ if __name__ == "__main__":
 	dataset = read_csv(sys.argv[1])
 
 	try:
-		regression = UniVariableLinearRegression(
+		regression1 = UniVariableLinearRegression(
 			dataset=dataset,
 			feature="km",
 			target="price",
-			learning_rate=LEARNING_RATE
+			learning_rate=LEARNING_RATE_1
+		)
+		regression2 = UniVariableLinearRegression(
+			dataset=dataset,
+			feature="km",
+			target="price",
+			learning_rate=LEARNING_RATE_2
+		)
+		regression3 = UniVariableLinearRegression(
+			dataset=dataset,
+			feature="km",
+			target="price",
+			learning_rate=LEARNING_RATE_3
 		)
 	except RegressionError as e:
 		print(e)
 		exit(1)
 
-	regression.gradient_descent()
+	regression1.gradient_descent()
+	regression2.gradient_descent()
+	regression3.gradient_descent()
 
-	write_to_csv("costs_iterations.csv", regression.iters_costs, ["iterations", "costs", "rmse"])
+	write_to_csv("costs_iterations1.csv", regression1.iters_costs, ["iterations", "costs", "rmse"])
+	write_to_csv("costs_iterations2.csv", regression2.iters_costs, ["iterations", "costs", "rmse"])
+	write_to_csv("costs_iterations3.csv", regression3.iters_costs, ["iterations", "costs", "rmse"])
 	write_to_csv(
 		"regression_parameters.csv",
 		[{
-			"theta0": regression.theta0,
-			"theta1": regression.theta1,
-			"x_min": regression.feature_min,
-			"x_max": regression.feature_max
+			"theta0": regression1.theta0,
+			"theta1": regression1.theta1,
+			"x_min": regression1.feature_min,
+			"x_max": regression1.feature_max
 			}],
 		fields=["theta0", "theta1", "x_min", "x_max"]
 		)

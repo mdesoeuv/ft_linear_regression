@@ -3,21 +3,30 @@ import matplotlib.pyplot as plt
 from learn import read_csv, predict, UniVariableLinearRegression, RegressionParameters, RegressionError
 
 
-def plot_iterations_costs(data: list):
+def plot_iterations_costs(datas: list):
 	
-	try:
-		iters = [float(entry['iterations']) for entry in data]
-		costs = [float(entry['costs']) for entry in data]
-		# rmse = [float(entry['rmse']) for entry in data]
-	except KeyError:
-		print("Invalid dataset.")
-		exit(1)
-
 	fig, ax = plt.subplots()
 	fig.suptitle("Cost function evolution with iterations")
-	ax.scatter(iters, costs)
 	ax.set_xlabel('iterations')
 	ax.set_ylabel('cost')
+	
+	all_costs = []
+	all_iters = []
+	for data in datas:
+		try:
+			iters = [float(entry['iterations']) for entry in data]
+			costs = [float(entry['costs']) for entry in data]
+			all_iters.append(iters)
+			all_costs.append(costs)
+			# rmse = [float(entry['rmse']) for entry in data]
+		except KeyError:
+			print("Invalid dataset.")
+			exit(1)
+	size = len(all_iters[0])
+	ax.scatter(all_iters[0], all_costs[0][:size], s=10, c="blue", label="Learning Rate : 0.5")
+	ax.scatter(all_iters[0], all_costs[1][:size], s=10, c="red", label="Learning Rate : 0.1")
+	ax.scatter(all_iters[0], all_costs[2][:size], s=10, c="green", label="Learning Rate : 0.01")
+	ax.legend()
 	try:
 		fig.savefig("iterations_costs.png")	
 	except Exception:
@@ -60,7 +69,9 @@ if __name__ == "__main__":
 		feature="km",
 		target="price"
 	)
-	iters_costs_data = read_csv("costs_iterations.csv")
+	iters_costs_data1 = read_csv("costs_iterations1.csv")
+	iters_costs_data2 = read_csv("costs_iterations2.csv")
+	iters_costs_data3 = read_csv("costs_iterations3.csv")
 	results_data = read_csv("regression_parameters.csv")[-1]
 
 	try:
@@ -76,7 +87,7 @@ if __name__ == "__main__":
 	print(f"R2 = {data.r_square()}")
 	print(f"RMSE = {data.calculate_rmse()}")
 
-	plot_iterations_costs(iters_costs_data)
+	plot_iterations_costs([iters_costs_data1, iters_costs_data2, iters_costs_data3])
 	plot_linear_regression(data)
 
 	plt.show()
