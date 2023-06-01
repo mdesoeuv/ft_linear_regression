@@ -1,16 +1,10 @@
 import sys
 import matplotlib.pyplot as plt
-from learn import read_csv, estimate_price,r_square, UniVariableLinearRegression
+from learn import read_csv, predict,r_square, UniVariableLinearRegression, RegressionParameters, RegressionError
 from dataclasses import dataclass
 
 #TODO: Analytics Object
 
-@dataclass
-class RegressionParameters:
-	theta0: float = 0
-	theta1: float = 0
-	x_min: float = 0
-	x_max: float = 1
 
 
 @dataclass
@@ -62,10 +56,10 @@ def plot_linear_regression(dataset: str, params: RegressionParameters):
 	# Calculating two points to draw the regression line
 	x1 = 200000
 	x1_norm = UniVariableLinearRegression.normalize(x1, params.x_min, params.x_max)
-	y1 = estimate_price(x1_norm, params.theta0, params.theta1)
+	y1 = predict(x1_norm, params.theta0, params.theta1)
 	x2 = 42000
 	x2_norm = UniVariableLinearRegression.normalize(x2, params.x_min, params.x_max)
-	y2 = estimate_price(x2_norm, params.theta0, params.theta1)
+	y2 = predict(x2_norm, params.theta0, params.theta1)
 	print("Regression Line drawn with points :")
 	print([x1, y1], [x2, y2], end="\n\n")
 	plt.plot([x1, x2], [y1, y2], label='linear_regression', color='red')
