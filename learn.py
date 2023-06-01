@@ -1,11 +1,15 @@
 from pathlib import Path
 import csv
 import sys
+import copy
 import math
 
 
 LEARNING_RATE = 0.1
 MAX_ITERATIONS = 10000
+
+
+#TODO: object DataSet{fields[str], normalize, size, feature_name}
 
 
 def read_csv(filepath: str):
@@ -40,9 +44,10 @@ def normalize(x: float, x_min = 0, x_max = 1):
 
 def normalize_dataset(dataset: list, mileage_min: float, mileage_max: float):
 
-	for entry in dataset:
+	cpy_data = copy.deepcopy(dataset)
+	for entry in cpy_data:
 		entry['km'] = normalize(float(entry['km']), mileage_min, mileage_max)
-	return dataset
+	return cpy_data
 
 
 def estimate_price(mileage: float, theta0: float, theta1: float):
@@ -79,6 +84,21 @@ def derivative_sum(dataset: list, theta0: float, theta1: float):
 		sum_dt1 += mileage * (estimate_price(mileage, theta0, theta1) - price) / m
 
 	return (sum_dt0, sum_dt1)
+
+
+def r_square(normalized_dataset: list, theta0: float, theta1: float):
+	mileages = [float(entry['km']) for entry in normalized_dataset]
+	prices = [float(entry['price']) for entry in normalized_dataset]
+	SSres = 0
+	SStot = 0
+	price_avg = sum(prices) / len(prices)
+	for mileage, price in zip(mileages, prices):
+		error = price - estimate_price(mileage, theta0, theta1)
+		SSres += error**2
+		SStot += (price - price_avg)**2
+	return 1 - (SSres / SStot)
+
+
 
 
 if __name__ == "__main__":
