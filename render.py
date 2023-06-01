@@ -1,8 +1,17 @@
 import sys
 import matplotlib.pyplot as plt
 from learn import read_csv, estimate_price, normalize, normalize_dataset ,r_square
+from dataclasses import dataclass
 
 #TODO: Analytics Object
+
+@dataclass
+class RegressionParameters:
+	theta0: float = 0
+	theta1: float = 0
+	x_min: float = 0
+	x_max: float = 1
+
 
 def plot_iterations_costs(data: str):
 	
@@ -26,14 +35,9 @@ def plot_iterations_costs(data: str):
 	print(f"RMSE = {rmse[-1]}")
 
 
-def plot_linear_regression(dataset: str, results: str):
+def plot_linear_regression(dataset: str, params: RegressionParameters):
 
 	try:
-		theta0 = float(results["theta0"])
-		theta1 = float(results["theta1"])
-		x_min = float(results["x_min"])
-		x_max = float(results["x_max"])
-		
 		x = [int(entry['km']) for entry in dataset]
 		y = [int(entry['price']) for entry in dataset]
 	except KeyError:
@@ -48,11 +52,11 @@ def plot_linear_regression(dataset: str, results: str):
 
 	# Calculating two points to draw the regression line
 	x1 = 200000
-	x1_norm = normalize(x1, x_min, x_max)
-	y1 = estimate_price(x1_norm, theta0, theta1)
+	x1_norm = normalize(x1, params.x_min, params.x_max)
+	y1 = estimate_price(x1_norm, params.theta0, params.theta1)
 	x2 = 42000
-	x2_norm = normalize(x2, x_min, x_max)
-	y2 = estimate_price(x2_norm, theta0, theta1)
+	x2_norm = normalize(x2, params.x_min, params.x_max)
+	y2 = estimate_price(x2_norm, params.theta0, params.theta1)
 	print("Regression Line drawn with points :")
 	print([x1, y1], [x2, y2], end="\n\n")
 	plt.plot([x1, x2], [y1, y2], label='linear_regression', color='red')
@@ -60,7 +64,6 @@ def plot_linear_regression(dataset: str, results: str):
 		fig.savefig("linear_regression.png")	
 	except Exception:
 		print("Png export failed.")
-
 
 
 if __name__ == "__main__":
@@ -73,21 +76,20 @@ if __name__ == "__main__":
 	iters_costs_data = read_csv("costs_iterations.csv")
 	results_data = read_csv("regression_results.csv")[-1]
 	print(results_data)
-	#TODO: object RegressionParameters
-	theta0 = float(results_data["theta0"])
-	theta1 = float(results_data["theta1"])
-	x_min = float(results_data["x_min"])
-	x_max = float(results_data["x_max"])
-		
+	params = RegressionParameters(
+		theta0=float(results_data.get("theta0", 0)),
+		theta1=float(results_data.get("theta1", 0)),
+		x_min=float(results_data.get("x_min", 0)),
+		x_max=float(results_data.get("x_max", 1))
+	)
 
-	norm_dataset = normalize_dataset(dataset, x_min, x_max)
-
+	norm_dataset = normalize_dataset(dataset, params.x_min, params.x_max)
 
 	print("Analytics :")
-	rsquare = r_square(norm_dataset, theta0, theta1)
+	rsquare = r_square(norm_dataset, params.theta0, params.theta1)
 	print(f"R2 = {rsquare}")
 
 	plot_iterations_costs(iters_costs_data)
-	plot_linear_regression(dataset, results_data)
+	plot_linear_regression(dataset, params)
 
 	plt.show()
