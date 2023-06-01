@@ -31,7 +31,7 @@ if __name__ == '__main__':
 			x_min = float(results["x_min"])
 			x_max = float(results["x_max"])
 		except KeyError:
-			print("Invalid csv file.")
+			print("Invalid results csv file.")
 			exit(1)
 
 	prompt = "Enter mileage in kilometers : "
