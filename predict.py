@@ -1,5 +1,5 @@
 import argparse
-from learn import read_csv, normalize
+from learn import read_csv, UniVariableLinearRegression
 
 
 def parse_arguments():
@@ -31,7 +31,7 @@ if __name__ == '__main__':
 			x_min = float(results["x_min"])
 			x_max = float(results["x_max"])
 		except KeyError:
-			print("Invalid csv file.")
+			print("Invalid results csv file.")
 			exit(1)
 
 	prompt = "Enter mileage in kilometers : "
@@ -40,7 +40,7 @@ if __name__ == '__main__':
 		if mileage.lower() == "exit":
 			exit(0)
 		try:
-			mileage = normalize(float(mileage), x_min, x_max)
+			mileage = UniVariableLinearRegression.normalize(float(mileage), x_min, x_max)
 			print(f"calculated price is : {theta0 + (mileage * theta1)}")
 		except ValueError:
 			print("Please input a valid mileage or 'exit' to leave the program")

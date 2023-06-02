@@ -3,13 +3,104 @@ import csv
 import sys
 import copy
 import math
+from dataclasses import dataclass
 
 
-LEARNING_RATE = 0.1
-MAX_ITERATIONS = 10000
+class RegressionError(Exception):
+	def __init__(self, msg):
+		super().__init__(msg)
 
 
-#TODO: object DataSet{fields[str], normalize, size, feature_name}
+class UniVariableLinearRegression():
+
+	@staticmethod	
+	def normalize(x: float, x_min = 0, x_max = 1):
+		return (x - x_min) / (x_max - x_min)
+
+	def normalize_dataset(self):
+		self.normalized_dataset = copy.deepcopy(self.dataset)
+		for entry in self.normalized_dataset:
+			entry[self.feature] = self.normalize(
+				float(entry[self.feature]),
+				self.feature_min,
+				self.feature_max
+				)
+	
+	def calculate_cost(self):
+		cost = 0
+		for feature, target in zip(self.norm_features, self.y):
+			diff = predict(feature, self.theta0, self.theta1) - target
+			cost += (diff * diff) / (2 * self.dataset_size)
+		return cost 
+	
+	def calculate_rmse(self):
+		return math.sqrt(self.calculate_cost())
+
+	def derivative_sum(self):
+		sum_dt0 = 0
+		sum_dt1 = 0
+		for feature, target in zip(self.norm_features, self.y):
+			sum_dt0 += (predict(feature, self.theta0, self.theta1) - target) / self.dataset_size
+			sum_dt1 += feature * (predict(feature, self.theta0, self.theta1) - target) / self.dataset_size
+		return (self.learning_rate * sum_dt0, self.learning_rate * sum_dt1)
+
+	def r_square(self):
+		SSres = 0
+		SStot = 0
+		target_avg = sum(self.y) / len(self.y)
+		for feature, target in zip(self.norm_features, self.y):
+			error = target - predict(feature, self.theta0, self.theta1)
+			SSres += error**2
+			SStot += (target - target_avg)**2
+		return 1 - (SSres / SStot)
+	
+	def gradient_descent(self):			
+		min_reached = False
+		while not min_reached and self.iter < self.max_iterations:
+			self.iter += 1
+			cost = self.calculate_cost()
+			self.iters_costs.append(
+				{"iterations": self.iter, "costs": cost, "rmse": math.sqrt(cost)}
+				)
+			tmp_theta0, tmp_theta1 = self.derivative_sum()
+			if round(self.theta0 - tmp_theta0, 2) == round(self.theta0, 2) and round(self.theta1 - tmp_theta1, 2) == round(self.theta1, 2):
+				print(f"Minimum reached in {self.iter} iterations : learning_rate={self.learning_rate}, theta0={self.theta0 - tmp_theta0}, theta1={self.theta1 - tmp_theta1}")
+				min_reached = True
+			self.theta0 = self.theta0 - tmp_theta0
+			self.theta1 = self.theta1 - tmp_theta1
+
+	def print_analytics(self):
+		print("Analytics :")
+		print(f"Learning Rate = {self.learning_rate}")
+		print(f"Iterations = {self.iter}")
+		print(f"R2 = {self.r_square()}")
+		print(f"RMSE = {self.calculate_rmse()}")
+		print(f"Theta0 = {self.theta0}")
+		print(f"Theta1 = {self.theta1}\n")
+
+	def __init__(self, dataset: list, feature: str, target: str,
+	      theta0 = 0, theta1 = 0,learning_rate = 0, max_iterations = 10000):
+		self.dataset = dataset
+		self.feature = feature
+		self.target = target
+		self.dataset_size = len(dataset)
+		if not self.dataset_size:
+			raise RegressionError("Invalid dataset size.")
+		try:
+			self.x = [float(entry[feature]) for entry in self.dataset]
+			self.y = [float(entry[target]) for entry in self.dataset]
+		except KeyError as e:
+			raise RegressionError("Invalid dataset.") from e
+		self.theta0=theta0
+		self.theta1=theta1
+		self.feature_min=min(self.x)
+		self.feature_max=max(self.x)
+		self.norm_features = [self.normalize(feature, self.feature_min, self.feature_max) for feature in self.x]
+		self.normalize_dataset()
+		self.learning_rate = learning_rate
+		self.iter = 0
+		self.iters_costs = []
+		self.max_iterations = max_iterations
 
 
 def read_csv(filepath: str):
@@ -37,68 +128,8 @@ def write_to_csv(filepath: str, data: list, fields: list):
 		writer.writerows(data)
 
 
-def normalize(x: float, x_min = 0, x_max = 1):
-
-	return (x - x_min) / (x_max - x_min)
-
-
-def normalize_dataset(dataset: list, mileage_min: float, mileage_max: float):
-
-	cpy_data = copy.deepcopy(dataset)
-	for entry in cpy_data:
-		entry['km'] = normalize(float(entry['km']), mileage_min, mileage_max)
-	return cpy_data
-
-
-def estimate_price(mileage: float, theta0: float, theta1: float):
-	return theta0 + (mileage * theta1)
-
-
-def calculate_cost(dataset: list, theta0: float, theta1: float):
-	cost = 0
-	m = len(dataset)
-	if not m:
-		print("Invalid dataset.")
-		exit(1)
-	
-	for entry in dataset:
-		try:
-			mileage = float(entry['km'])
-			price = float(entry['price'])
-		except KeyError:
-			print("Invalid dataset.")
-			exit(1)
-		diff = estimate_price(mileage, theta0, theta1) - price
-		cost += (diff * diff) / (2 * m)
-	return cost 
-
-
-def derivative_sum(dataset: list, theta0: float, theta1: float):
-	sum_dt0 = 0
-	sum_dt1 = 0
-	m = len(dataset)
-	for entry in dataset:
-		mileage = float(entry['km'])
-		price = float(entry['price'])
-		sum_dt0 += (estimate_price(mileage, theta0, theta1) - price) / m
-		sum_dt1 += mileage * (estimate_price(mileage, theta0, theta1) - price) / m
-
-	return (sum_dt0, sum_dt1)
-
-
-def r_square(normalized_dataset: list, theta0: float, theta1: float):
-	mileages = [float(entry['km']) for entry in normalized_dataset]
-	prices = [float(entry['price']) for entry in normalized_dataset]
-	SSres = 0
-	SStot = 0
-	price_avg = sum(prices) / len(prices)
-	for mileage, price in zip(mileages, prices):
-		error = price - estimate_price(mileage, theta0, theta1)
-		SSres += error**2
-		SStot += (price - price_avg)**2
-	return 1 - (SSres / SStot)
-
-
+def predict(feature: float, theta0: float, theta1: float):
+	return theta0 + (feature * theta1)
 
 
 if __name__ == "__main__":
@@ -108,46 +139,33 @@ if __name__ == "__main__":
 		exit(1)
 	
 	dataset = read_csv(sys.argv[1])
+
 	try:
-		mileages = [float(entry['km']) for entry in dataset]
-	except KeyError:
-		print("Invalid dataset.")
+		regression = UniVariableLinearRegression(
+			dataset=dataset,
+			feature="km",
+			target="price",
+			learning_rate=0.5,
+			theta0=0,
+			theta1=0
+		)
+	except RegressionError as e:
+		print(e)
 		exit(1)
-	
-	mileage_min = min(mileages)
-	mileage_max = max(mileages)
 
-	norm_dataset = normalize_dataset(dataset, mileage_min=mileage_min, mileage_max=mileage_max)
-	
-	theta0 = 0
-	theta1 = 0
+	regression.gradient_descent()
+	regression.print_analytics()
 
-	min_reached = False
-	iter_count = 0
-	iters_costs = []
-
-	while not min_reached and iter_count < MAX_ITERATIONS:
-		iter_count += 1
-		cost = calculate_cost(norm_dataset, theta0, theta1)
-		iters_costs.append({"iterations": iter_count, "costs": cost, "rmse": math.sqrt(cost)})
-		derivate_theta0, derivate_theta1 = derivative_sum(norm_dataset, theta0, theta1)
-		tmp_theta0 = (LEARNING_RATE * derivate_theta0)
-		tmp_theta1 = (LEARNING_RATE * derivate_theta1)
-		if round(theta0 - tmp_theta0, 2) == round(theta0, 2) and round(theta1 - tmp_theta1, 2) == round(theta1, 2):
-			print(f"Minimum reached in {iter_count} iterations : theta0={theta0 - tmp_theta0}, theta1={theta1 - tmp_theta1}")
-			min_reached = True
-		theta0 = theta0 - tmp_theta0
-		theta1 = theta1 - tmp_theta1
-
-	write_to_csv("costs_iterations.csv", iters_costs, ["iterations", "costs", "rmse"])
+	write_to_csv("costs_iterations.csv", regression.iters_costs, ["iterations", "costs", "rmse"])
 	write_to_csv(
-		"regression_results.csv",
+		"regression_parameters.csv",
 		[{
-			"theta0": theta0,
-			"theta1": theta1,
-			"x_min": mileage_min,
-			"x_max": mileage_max
+			"theta0": regression.theta0,
+			"theta1": regression.theta1,
+			"x_min": regression.feature_min,
+			"x_max": regression.feature_max,
+			"learning_rate": regression.learning_rate
 			}],
-		fields=["theta0", "theta1", "x_min", "x_max"]
+		fields=["theta0", "theta1", "x_min", "x_max", "learning_rate"]
 		)
 
