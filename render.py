@@ -1,4 +1,4 @@
-import sys
+import sys, signal
 import matplotlib.pyplot as plt
 from learn import read_csv, predict, UniVariableLinearRegression, RegressionError
 
@@ -56,6 +56,8 @@ if __name__ == "__main__":
 		print("usage: render [csvfile]")
 		exit(1)
 	
+	signal.signal(signal.SIGINT, signal.SIG_DFL)	
+
 	dataset = read_csv(sys.argv[1])
 
 	# Plotting original regression
@@ -106,5 +108,5 @@ if __name__ == "__main__":
 		[regression.iters_costs for regression in regressions],
 		[regression.learning_rate for regression in regressions]
 		)
-
+	
 	plt.show()
