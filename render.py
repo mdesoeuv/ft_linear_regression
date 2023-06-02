@@ -1,32 +1,25 @@
 import sys
 import matplotlib.pyplot as plt
-from learn import read_csv, predict, UniVariableLinearRegression, RegressionParameters, RegressionError
+from learn import read_csv, predict, UniVariableLinearRegression, RegressionError
 
 
-def plot_iterations_costs(datas: list):
+def plot_iterations_costs(datas: list, learning_rates: list):
 	
 	fig, ax = plt.subplots()
 	fig.suptitle("Cost function evolution with iterations")
 	ax.set_xlabel('iterations')
 	ax.set_ylabel('cost')
 	
-	all_costs = []
-	all_iters = []
-	for data in datas:
+	for data, learning_rate in zip(datas, learning_rates):
 		try:
 			iters = [float(entry['iterations']) for entry in data]
 			costs = [float(entry['costs']) for entry in data]
-			all_iters.append(iters)
-			all_costs.append(costs)
-			# rmse = [float(entry['rmse']) for entry in data]
+			ax.scatter(iters, costs, s=5, label=f"Learning Rate : {learning_rate}")
 		except KeyError:
 			print("Invalid dataset.")
 			exit(1)
-	size = len(all_iters[0])
-	ax.scatter(all_iters[0], all_costs[0][:size], s=10, c="blue", label="Learning Rate : 0.5")
-	ax.scatter(all_iters[0], all_costs[1][:size], s=10, c="red", label="Learning Rate : 0.1")
-	ax.scatter(all_iters[0], all_costs[2][:size], s=10, c="green", label="Learning Rate : 0.01")
 	ax.legend()
+	ax.set(xlim=(0,400))
 	try:
 		fig.savefig("iterations_costs.png")	
 	except Exception:
@@ -64,14 +57,19 @@ if __name__ == "__main__":
 		exit(1)
 	
 	dataset = read_csv(sys.argv[1])
-	data = UniVariableLinearRegression(
-		dataset=dataset,
-		feature="km",
-		target="price"
-	)
-	iters_costs_data1 = read_csv("costs_iterations1.csv")
-	iters_costs_data2 = read_csv("costs_iterations2.csv")
-	iters_costs_data3 = read_csv("costs_iterations3.csv")
+
+	# Plotting original regression
+	regressions = []
+	try:
+		data = UniVariableLinearRegression(
+			dataset=dataset,
+			feature="km",
+			target="price"
+		)
+	except RegressionError:
+		print("Invalid data.")
+		exit(1)
+
 	results_data = read_csv("regression_parameters.csv")[-1]
 
 	try:
@@ -79,15 +77,34 @@ if __name__ == "__main__":
 		data.feature_max = float(results_data["x_max"])
 		data.theta0 = float(results_data["theta0"])
 		data.theta1 = float(results_data["theta1"])
+		data.learning_rate = float(results_data["learning_rate"])
 	except KeyError:
 		print("Invalid results csv file.")
 		exit(1)
-	
-	print("Analytics :")
-	print(f"R2 = {data.r_square()}")
-	print(f"RMSE = {data.calculate_rmse()}")
-
-	plot_iterations_costs([iters_costs_data1, iters_costs_data2, iters_costs_data3])
+	data.iters_costs = read_csv("costs_iterations.csv")
+	regressions.append(data)
 	plot_linear_regression(data)
+	
+	# Plotting more regressions to emphasis the learning rate
+	for learning_rate in [0.55, 0.7, 1, 0.05]:
+		try:
+			regression = UniVariableLinearRegression(
+				dataset=dataset,
+				feature="km",
+				target="price",
+				learning_rate=learning_rate
+			)
+		except RegressionError:
+			print("Invalid data.")
+			exit(1)
+
+		regression.gradient_descent()
+		regression.print_analytics()
+		regressions.append(regression)
+
+	plot_iterations_costs(
+		[regression.iters_costs for regression in regressions],
+		[regression.learning_rate for regression in regressions]
+		)
 
 	plt.show()

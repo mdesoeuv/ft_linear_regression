@@ -6,26 +6,12 @@ import math
 from dataclasses import dataclass
 
 
-LEARNING_RATE_1 = 0.5
-LEARNING_RATE_2 = 0.1
-LEARNING_RATE_3 = 0.01
-MAX_ITERATIONS = 10000
-
-
 class RegressionError(Exception):
 	def __init__(self, msg):
 		super().__init__(msg)
 
 
-@dataclass
-class RegressionParameters:
-	theta0: float = 0
-	theta1: float = 0
-	feature_min: float = 0
-	feature_max: float = 1
-
-
-class UniVariableLinearRegression(RegressionParameters):
+class UniVariableLinearRegression():
 
 	@staticmethod	
 	def normalize(x: float, x_min = 0, x_max = 1):
@@ -70,7 +56,7 @@ class UniVariableLinearRegression(RegressionParameters):
 	
 	def gradient_descent(self):			
 		min_reached = False
-		while not min_reached and self.iter < MAX_ITERATIONS:
+		while not min_reached and self.iter < self.max_iterations:
 			self.iter += 1
 			cost = self.calculate_cost()
 			self.iters_costs.append(
@@ -78,18 +64,26 @@ class UniVariableLinearRegression(RegressionParameters):
 				)
 			tmp_theta0, tmp_theta1 = self.derivative_sum()
 			if round(self.theta0 - tmp_theta0, 2) == round(self.theta0, 2) and round(self.theta1 - tmp_theta1, 2) == round(self.theta1, 2):
-				print(f"Minimum reached in {self.iter} iterations : theta0={self.theta0 - tmp_theta0}, theta1={self.theta1 - tmp_theta1}")
+				print(f"Minimum reached in {self.iter} iterations : learning_rate={self.learning_rate}, theta0={self.theta0 - tmp_theta0}, theta1={self.theta1 - tmp_theta1}")
 				min_reached = True
 			self.theta0 = self.theta0 - tmp_theta0
 			self.theta1 = self.theta1 - tmp_theta1
 
+	def print_analytics(self):
+		print("Analytics :")
+		print(f"Learning Rate = {self.learning_rate}")
+		print(f"Iterations = {self.iter}")
+		print(f"R2 = {self.r_square()}")
+		print(f"RMSE = {self.calculate_rmse()}")
+		print(f"Theta0 = {self.theta0}")
+		print(f"Theta1 = {self.theta1}\n")
+
 	def __init__(self, dataset: list, feature: str, target: str,
-	      theta0 = 0, theta1 = 0,learning_rate = 0):
+	      theta0 = 0, theta1 = 0,learning_rate = 0, max_iterations = 10000):
 		self.dataset = dataset
 		self.feature = feature
 		self.target = target
 		self.dataset_size = len(dataset)
-		self.iters_costs = []
 		if not self.dataset_size:
 			raise RegressionError("Invalid dataset size.")
 		try:
@@ -97,17 +91,16 @@ class UniVariableLinearRegression(RegressionParameters):
 			self.y = [float(entry[target]) for entry in self.dataset]
 		except KeyError as e:
 			raise RegressionError("Invalid dataset.") from e
-		
-		super().__init__(
-			theta0=theta0,
-			theta1=theta1,
-			feature_min=min(self.x),
-			feature_max=max(self.x)
-		)
+		self.theta0=theta0
+		self.theta1=theta1
+		self.feature_min=min(self.x)
+		self.feature_max=max(self.x)
 		self.norm_features = [self.normalize(feature, self.feature_min, self.feature_max) for feature in self.x]
 		self.normalize_dataset()
 		self.learning_rate = learning_rate
 		self.iter = 0
+		self.iters_costs = []
+		self.max_iterations = max_iterations
 
 
 def read_csv(filepath: str):
@@ -148,43 +141,31 @@ if __name__ == "__main__":
 	dataset = read_csv(sys.argv[1])
 
 	try:
-		regression1 = UniVariableLinearRegression(
+		regression = UniVariableLinearRegression(
 			dataset=dataset,
 			feature="km",
 			target="price",
-			learning_rate=LEARNING_RATE_1
-		)
-		regression2 = UniVariableLinearRegression(
-			dataset=dataset,
-			feature="km",
-			target="price",
-			learning_rate=LEARNING_RATE_2
-		)
-		regression3 = UniVariableLinearRegression(
-			dataset=dataset,
-			feature="km",
-			target="price",
-			learning_rate=LEARNING_RATE_3
+			learning_rate=0.5,
+			theta0=0,
+			theta1=0
 		)
 	except RegressionError as e:
 		print(e)
 		exit(1)
 
-	regression1.gradient_descent()
-	regression2.gradient_descent()
-	regression3.gradient_descent()
+	regression.gradient_descent()
+	regression.print_analytics()
 
-	write_to_csv("costs_iterations1.csv", regression1.iters_costs, ["iterations", "costs", "rmse"])
-	write_to_csv("costs_iterations2.csv", regression2.iters_costs, ["iterations", "costs", "rmse"])
-	write_to_csv("costs_iterations3.csv", regression3.iters_costs, ["iterations", "costs", "rmse"])
+	write_to_csv("costs_iterations.csv", regression.iters_costs, ["iterations", "costs", "rmse"])
 	write_to_csv(
 		"regression_parameters.csv",
 		[{
-			"theta0": regression1.theta0,
-			"theta1": regression1.theta1,
-			"x_min": regression1.feature_min,
-			"x_max": regression1.feature_max
+			"theta0": regression.theta0,
+			"theta1": regression.theta1,
+			"x_min": regression.feature_min,
+			"x_max": regression.feature_max,
+			"learning_rate": regression.learning_rate
 			}],
-		fields=["theta0", "theta1", "x_min", "x_max"]
+		fields=["theta0", "theta1", "x_min", "x_max", "learning_rate"]
 		)
 
