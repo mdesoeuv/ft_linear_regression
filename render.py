@@ -1,6 +1,18 @@
-import sys, signal
+import sys, signal, argparse
 import matplotlib.pyplot as plt
 from learn import read_csv, predict, UniVariableLinearRegression, RegressionError
+
+
+def parse_arguments():
+
+	parser = argparse.ArgumentParser(prog="render", usage="render -f [dataset csv file]")
+	parser.add_argument(
+		"-f", "--file", type=str,
+		action='store', required=True,
+		help="path of the csv file containing the dataset to render"
+		)
+	return parser.parse_args()
+
 
 
 def plot_iterations_costs(datas: list, learning_rates: list):
@@ -52,13 +64,11 @@ def plot_linear_regression(data: UniVariableLinearRegression):
 
 if __name__ == "__main__":
     
-	if len(sys.argv) < 2:
-		print("usage: render [csvfile]")
-		exit(1)
+	args = parse_arguments()
 	
 	signal.signal(signal.SIGINT, signal.SIG_DFL)	
 
-	dataset = read_csv(sys.argv[1])
+	dataset = read_csv(args.file)
 
 	# Plotting original regression
 	regressions = []

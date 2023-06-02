@@ -3,7 +3,7 @@ import csv
 import sys
 import copy
 import math
-from dataclasses import dataclass
+import argparse
 
 
 class RegressionError(Exception):
@@ -132,13 +132,21 @@ def predict(feature: float, theta0: float, theta1: float):
 	return theta0 + (feature * theta1)
 
 
+def parse_arguments():
+
+	parser = argparse.ArgumentParser(prog="learn", usage="learn -f [dataset csv file]")
+	parser.add_argument(
+		"-f", "--file", type=str,
+		action='store', required=True,
+		help="path of the csv file containing the training dataset"
+		)
+	return parser.parse_args()
+
+
 if __name__ == "__main__":
 	
-	if len(sys.argv) < 2:
-		print("usage: learn [csvfile]")
-		exit(1)
-	
-	dataset = read_csv(sys.argv[1])
+	args = parse_arguments()
+	dataset = read_csv(args.file)
 
 	try:
 		regression = UniVariableLinearRegression(

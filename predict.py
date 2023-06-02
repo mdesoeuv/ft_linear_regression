@@ -4,7 +4,7 @@ from learn import read_csv, UniVariableLinearRegression
 
 def parse_arguments():
 
-	parser = argparse.ArgumentParser(prog="predict", usage="predict [training csv]")
+	parser = argparse.ArgumentParser(prog="predict", usage="predict -f [training csv]")
 	parser.add_argument(
 		"-f", "--file", type=str,
 		action='store', required=False,
