@@ -127,13 +127,16 @@ def read_csv(filepath: str):
     if not Path(filepath).exists() or Path(filepath).is_dir():
         print("File does not exist or is a directory")
         exit(1)
-
-    dataset = []
-    with open(filepath, mode="r", newline="") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            dataset.append(row)
-    return dataset
+    try:
+        dataset = []
+        with open(filepath, mode="r", newline="") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                dataset.append(row)
+        return dataset
+    except Exception as err:
+        print(f"CSV file error : {err}")
+        exit(1)
 
 
 def write_to_csv(filepath: str, data: list, fields: list):
@@ -141,10 +144,14 @@ def write_to_csv(filepath: str, data: list, fields: list):
         print("File is a directory")
         exit(1)
 
-    with open(filepath, mode="w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fields)
-        writer.writeheader()
-        writer.writerows(data)
+    try:
+        with open(filepath, mode="w", newline="") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            writer.writeheader()
+            writer.writerows(data)
+    except Exception as err:
+        print(f"CSV file error : {err}")
+        exit(1)
 
 
 def predict(feature: float, theta0: float, theta1: float):
