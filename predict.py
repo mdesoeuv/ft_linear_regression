@@ -45,7 +45,8 @@ if __name__ == '__main__':
             mileage = UniVariableLinearRegression.normalize(
                 float(mileage), x_min, x_max
                 )
-            print(f"calculated price is : {theta0 + (mileage * theta1)}")
+            print(f"calculated price is : \
+{round(theta0 + (mileage * theta1), 2)}")
         except ValueError:
             print(
                 "Please input a valid mileage or 'exit' to leave the program"
