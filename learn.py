@@ -23,10 +23,14 @@ class UniVariableLinearRegression:
                 float(entry[self.feature]), self.feature_min, self.feature_max
             )
 
+    @staticmethod
+    def predict(feature: float, theta0: float, theta1: float):
+        return theta0 + (feature * theta1)
+
     def calculate_cost(self):
         cost = 0
         for feature, target in zip(self.norm_features, self.y):
-            diff = predict(feature, self.theta0, self.theta1) - target
+            diff = self.predict(feature, self.theta0, self.theta1) - target
             cost += (diff * diff) / (2 * self.dataset_size)
         return cost
 
@@ -38,11 +42,11 @@ class UniVariableLinearRegression:
         sum_dt1 = 0
         for feature, target in zip(self.norm_features, self.y):
             sum_dt0 += (
-                predict(feature, self.theta0, self.theta1) - target
+                self.predict(feature, self.theta0, self.theta1) - target
             ) / self.dataset_size
             sum_dt1 += (
                 feature
-                * (predict(feature, self.theta0, self.theta1) - target)
+                * (self.predict(feature, self.theta0, self.theta1) - target)
                 / self.dataset_size
             )
         return (self.learning_rate * sum_dt0, self.learning_rate * sum_dt1)
@@ -52,7 +56,7 @@ class UniVariableLinearRegression:
         SStot = 0
         target_avg = sum(self.y) / len(self.y)
         for feature, target in zip(self.norm_features, self.y):
-            error = target - predict(feature, self.theta0, self.theta1)
+            error = target - self.predict(feature, self.theta0, self.theta1)
             SSres += error**2
             SStot += (target - target_avg) ** 2
         return 1 - (SSres / SStot)
@@ -94,7 +98,7 @@ class UniVariableLinearRegression:
         target: str,
         theta0=0,
         theta1=0,
-        learning_rate=0,
+        learning_rate=0.5,
         max_iterations=10000,
     ):
         self.dataset = dataset
@@ -152,10 +156,6 @@ def write_to_csv(filepath: str, data: list, fields: list):
     except Exception as err:
         print(f"CSV file error : {err}")
         exit(1)
-
-
-def predict(feature: float, theta0: float, theta1: float):
-    return theta0 + (feature * theta1)
 
 
 def parse_arguments():

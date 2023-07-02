@@ -2,8 +2,8 @@ import signal
 import argparse
 import matplotlib
 import matplotlib.pyplot as plt
-from learn import (read_csv, predict,
-                   UniVariableLinearRegression, RegressionError)
+from learn import (read_csv, RegressionError)
+from learn import UniVariableLinearRegression as lr
 
 
 def parse_arguments():
@@ -42,7 +42,7 @@ def plot_iterations_costs(datas: list, learning_rates: list):
         print("Png export failed.")
 
 
-def plot_linear_regression(data: UniVariableLinearRegression):
+def plot_linear_regression(data: lr):
     matplotlib.use("webagg")
     fig, ax = plt.subplots()
     fig.suptitle("Linear regression representation")
@@ -52,13 +52,13 @@ def plot_linear_regression(data: UniVariableLinearRegression):
 
     # Calculating two points to draw the regression line
     x1 = 200000
-    x1_norm = UniVariableLinearRegression.normalize(
+    x1_norm = lr.normalize(
         x1, data.feature_min, data.feature_max)
-    y1 = predict(x1_norm, data.theta0, data.theta1)
+    y1 = lr.predict(x1_norm, data.theta0, data.theta1)
     x2 = 42000
-    x2_norm = UniVariableLinearRegression.normalize(
+    x2_norm = lr.normalize(
         x2, data.feature_min, data.feature_max)
-    y2 = predict(x2_norm, data.theta0, data.theta1)
+    y2 = lr.predict(x2_norm, data.theta0, data.theta1)
     print("Regression Line drawn with points :")
     print([x1, y1], [x2, y2], end="\n\n")
     plt.plot([x1, x2], [y1, y2], label='linear_regression', color='red')
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # Plotting original regression
     regressions = []
     try:
-        data = UniVariableLinearRegression(
+        data = lr(
             dataset=dataset,
             feature="km",
             target="price"
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     # Plotting more regressions to emphasis the learning rate
     for learning_rate in [0.55, 0.7, 1, 0.05]:
         try:
-            regression = UniVariableLinearRegression(
+            regression = lr(
                 dataset=dataset,
                 feature="km",
                 target="price",
